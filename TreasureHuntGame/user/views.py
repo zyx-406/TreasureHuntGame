@@ -153,8 +153,6 @@ def register_view(request):
             print('--- concurrent write error! ---')
             warning_dic = {'warning':'服务器有误，请重试'}
             return render(request, 'user/register.html', warning_dic)
-
-        print(db.user.find_one())
         
         # 返回时需要退出现登录账号，并跳转到登录界面
         return logout_view(request)
