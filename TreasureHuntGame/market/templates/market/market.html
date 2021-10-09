@@ -1,0 +1,107 @@
+{% extends 'game_template.html' %}
+
+{% block headerfixed %}
+<header id="header" class="fixed-top">
+{% endblock %}
+
+{% block headertitle %}
+<h1 class="logo mr-auto"><a href="/index">商城</a></h1>
+{% endblock %}
+
+{% block hero %}
+
+<!-- ======= Hero Section ======= -->
+<section id="hero" class="d-flex align-items-center justify-content-center">
+  <div class="container position-relative">
+    <h1>欢迎来到商城</h1>
+    <h2>在商城中您可以购买或出售宝物</h2>
+    <!-- <a href="/market/" class="btn-get-started scrollto">购买</a> -->
+    <a href="/market/" id="buy" class="btn-get-started scrollto">购买</a>
+    <script>
+      document.getElementById("buy").onclick = function () {
+        window.location.href = "/market/#counts"
+      }
+    </script>
+    <!-- <a href="/market/?f=sell" class="btn-get-started scrollto">出售</a> -->
+    <a href="/market/?f=sell" id="sell" class="btn-get-started scrollto">出售</a>
+    <script>
+      document.getElementById("sell").onclick = function () {
+        window.location.href = "/market/?f=sell#counts"
+      }
+    </script>
+  </div>
+</section><!-- End Hero -->
+
+{% endblock %}
+
+{% block count %}
+
+<!-- ======= Counts Section ======= -->
+<section id="counts" class="counts section-bg">
+  <div class="container">
+
+    <div class="row counters">
+
+      <div class="col-lg-3 col-6 text-center">
+        <span data-toggle="counter-up">{{ total }}</span>
+        <p>商品总数</p>
+      </div>
+
+      <div class="col-lg-3 col-6 text-center">
+        <span data-toggle="counter-up">{{ tool }}</span>
+        <p>工具数量</p>
+      </div>
+
+      <div class="col-lg-3 col-6 text-center">
+        <span data-toggle="counter-up">{{ ornament }}</span>
+        <p>饰品数量</p>
+      </div>
+
+      <div class="col-lg-3 col-6 text-center">
+        <span data-toggle="counter-up">{{ totipotent }}</span>
+        <p>全能宝物数量</p>
+      </div>
+
+    </div>
+
+  </div>
+</section><!-- End Counts Section -->
+
+{% endblock %}
+
+{% block mainbody %}
+
+<!-- ========= Main Body ========== -->
+<main id="main">
+
+  <!-- ======= Services Section ======= -->
+  <section id="services" class="services">
+    <div class="container">
+
+      <div class="section-title">
+        <h2>{{ f }}</h2>
+        <p>您可通过点击每张图片下文字进入具体信息页进行具体操作</p>
+      </div>
+
+      <div class="row">
+        {% for item in items %}
+        <div class="col-sm-6 col-lg-3 col-6">
+          <div class="icon-box iconbox-teal">
+            <div class="icon">
+              <i class="bx bxl-joomla"></i>
+            </div>
+            <h4><a href="/market/item?item={{ item.iid }}/">{{ item.name }}</a></h4>
+            {% if item.state == 'onsale' %}
+            <h5 style="color: gold;">价格: {{ item.price }}</h5>
+            {% endif %}
+            <p>星级: {{ item.grade }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section><!-- End Services Section -->
+
+</main><!-- End #main -->
+
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'game_template.html' %}
+
+{% block mainbody %}
+
+<!-- ========= Main Body ========== -->
+<main id="main">
+
+  <!-- ======= Services Section ======= -->
+  <section id="services" class="services">
+
+    <div class="section-title">
+      <h2>用户名: {{ username }}</h2>
+    </div>
+
+    <div class="container">
+
+      <div class="section-title">
+        <h2>穿戴</h2>
+      </div>
+
+      <div class="row justify-content-center">
+        {% for item in wearitems %}
+        <div class="col-sm-6 col-lg-3 col-6">
+          <div class="icon-box iconbox-teal">
+            <div class="icon">
+              <i class="bx bxl-joomla"></i>
+            </div>
+            <h4><a href="/home/item?item={{ item.iid }}/">{{ item.name }}</a></h4>
+            <p>星级: {{ item.grade }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="section-title">
+        <h2>背包</h2>
+      </div>
+
+      <div class="row">
+        {% for item in backpackitems %}
+        <div class="col-xs-1 col-sm-2 col-lg-3 col-6">
+          <div class="icon-box iconbox-teal">
+            <div id="item{{ item.iid }}" class="icon">
+              <i class="bx bxl-joomla"></i>
+            </div>
+            <script>
+              document.getElementById("item{{ item.iid }}").onclick = function () {
+                window.location.href = "/home/item?item={{ item.iid }}/";
+              }
+            </script>
+
+            <h5><a href="/home/item/?item={{ item.iid }}/">{{ item.name }}</a></h5>
+
+            {% if item.state == 'onsale' %}
+            <h6 style="color: gold;">正在挂牌</h6>
+            {% endif %}
+
+            <p>星级: {{ item.grade }}</p>
+
+            {% if item.state == 'backpack' %}
+            <button class="btn btn-defalut btn-sm" style="color: red;" onclick="drop('{{ item.iid }}');">丢弃</button>
+            {% endif %}
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <script type="text/javascript">
+        function drop(iid) {
+          $.ajax({
+            url: '/home/item/',
+            type: 'GET',
+            data: {
+              'f': "drop",
+              'item': iid,
+            },
+            success: function () {
+              window.location.reload();
+            }
+          });
+        }
+      </script>
+      
+    </div>
+
+  </section><!-- End Services Section -->
+
+</main><!-- End #main -->
+
+{% endblock %}

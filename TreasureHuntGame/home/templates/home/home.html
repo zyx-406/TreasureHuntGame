@@ -1,0 +1,106 @@
+{% extends 'game_template.html' %}
+
+{% block mainbody %}
+
+<!-- ========= Main Body ========== -->
+<main id="main">
+
+    <!-- ======= Services Section ======= -->
+    <section id="services" class="services">
+        <div class="container">
+
+            <div class="section-title">
+                <h4 style="color: red;"> {{ warning }} </h4>
+            </div>
+
+            <div class="row">
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="icon-box iconbox-teal">
+                        <div class="icon" id="my">
+                            <i class="bx bxl-angular"></i>
+                        </div>
+                        <script>
+                            document.getElementById("my").onclick = function () {
+                                window.location.href = "/home/my/";
+                            }
+                        </script>
+                        <h4><a href="/home/my/">个人</a></h4>
+                        <b>您可以进入自己的个人界面</b>
+                        <p>个人界面可以查看佩戴与背包</p>
+                        <p>点击宝物可以佩戴/取下/丢弃</p>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="icon-box iconbox-blue">
+                        <div class="icon" id="m">
+                            <i class="bx bxl-dribbble"></i>
+                        </div>
+                        <script>
+                            document.getElementById("m").onclick = function () {
+                                window.location.href = "/market/";
+                            }
+                        </script>
+                        <h4><a href="/market/">商城</a></h4>
+                        <b>您可以在商城购买或出售宝物</b>
+                        <p>宝物请点击详情购买/出售</p>
+                        <p>佩戴中的宝物无法出售</p>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="icon-box iconbox-orange ">
+                        <div class="icon" id = "w">
+                            <i class="bx bx-file"></i>
+                        </div>
+                        <script>
+                            document.getElementById("w").onclick = function () {
+                                var timestamp = new Date().getTime();
+                                window.location.href = "/work/?work=1&" + timestamp;
+                            }
+                        </script>
+                        <h4><a id="work" href="#">工作</a></h4>
+                        <script>
+                            document.getElementById("work").onclick = function () {
+                                var timestamp = new Date().getTime();
+                                window.location.href = "/work/?work=1&" + timestamp;
+                            }
+                        </script>
+                        <b>您可以通过工作来赚取金币</b>
+                        <p>每次会收获(10*工作效率)枚金币</p>
+                        <p>每10秒仅可工作一次(未实现)</p>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="icon-box iconbox-pink">
+                        <div class="icon" id="h">
+                            <i class="bx bx-tachometer"></i>
+                        </div>
+                        <script>
+                            document.getElementById("h").onclick = function(){ 
+                              var timestamp=new Date().getTime();
+                              window.location.href = "/hunt/?times=1&" + timestamp; 
+                            }
+                        </script>
+                        <h4><a id="hunt" href="#">寻宝</a></h4>
+                        <script>
+                            document.getElementById("hunt").onclick = function(){ 
+                              var timestamp=new Date().getTime();
+                              window.location.href = "/hunt/?times=1&" + timestamp; 
+                            }
+                        </script>
+                        <b>您可以通过寻宝来获取宝物</b>
+                        <p>每次寻宝消耗10枚金币</p>
+                        <p>寻得宝物等级与幸运值相关</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section><!-- End Services Section -->
+
+</main><!-- End #main -->
+
+{% endblock %}
