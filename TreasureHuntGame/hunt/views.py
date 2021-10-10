@@ -1,4 +1,5 @@
 from bson.objectid import ObjectId
+import math
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 from user.views import get_user, check_login, check_gold_backpack, server_error
@@ -31,9 +32,12 @@ def get_items(times, lucky_value):
     for item_type in item_list:
         if item_type['myid'] != 0:
             prob = float(item_type['prob'])
-            num = int(prob * (1+lucky_value*0.02) * items_all_num) # 可能性算法
+            num = int(prob * (1+lucky_value*math.exp(item_type['grade'])*0.0005) * items_all_num) # 可能性算法
+            # print(num)
             items_poor.extend(list(np.full(num, item_type['myid'])))
     
+    # print(len(items_poor))
+
     # 用0补充
     if (items_all_num-len(items_poor)) > 0:
         items_poor.extend(list(np.zeros(items_all_num-len(items_poor))))

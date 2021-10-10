@@ -1,4 +1,5 @@
 from bson.objectid import ObjectId
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
@@ -23,14 +24,38 @@ def create_user(username, password):
         'auto_clean':0,
     }
 
+def discard_worst(user, num):
+    # 查找最差的num个宝物
+    items = list(db.item.aggregate([
+        {'$match':{'buid':user['_id'], 'state':'backpack'}},
+        {'$project':{'sum':{"$add": ["$work_efficiency", "$lucky_value"] }}},
+        {'$sort':{'sum':1}},
+        {'$limit':num},
+    ]))
+    # 将其删除
+    for item in items:
+        db.item.delete_one({'_id':item['_id']})
+    # 更新user的信息
+    user['backpack'] -= num
+    # 更新数据库(此部分可在调用此函数的函数里解决，减少一次数据库更改)
+    try:
+        db.user.update({'_id':user['_id']}, user)
+    except:
+        print('--- concurrent write error! ---')
+        return HttpResponse({'error':'服务器有误，请重试'})
+
 max_num = 60
 # 检查用户金币是否不足或背包是否有空
 def check_gold_backpack(user, gold, num):
-
+    print(user)
     if user['gold_num'] < gold:
         return False, '金币不足'
     if (user['backpack'] + num) > max_num:
-        return False, '背包空间不足'
+        if 'auto_clean' in user:
+            if user['auto_clean'] == 1:
+                discard_worst(user, num)
+        else:
+            return False, '背包空间不足'
 
     return True, ''
 

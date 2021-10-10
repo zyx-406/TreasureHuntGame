@@ -30,4 +30,6 @@ urlpatterns = [
     path('operate/', views.test_operate_view),
     # 市场(购买/出售/回收) 测试
     path('market/', views.test_market_view),
+    # 自动删除宝物 测试
+    path('settings/', views.test_settings_view),
 ]

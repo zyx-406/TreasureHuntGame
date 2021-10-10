@@ -1,4 +1,3 @@
-import json
 from bson.objectid import ObjectId
 from django.http.response import JsonResponse
 from TreasureHuntGame.settings import db
@@ -407,3 +406,50 @@ def test_market_view(request):
     else:
         print('请使用规定json格式')
         return JsonResponse({'error':'请使用规定json格式'})
+
+@check_login
+def test_settings_view(request):
+    # 判断数据库是否连接
+    if db is None:
+        return JsonResponse({'error':'服务器有误，请重试'})
+
+    # 获取username, uid, 和user文档
+    username, uid, user = get_user(request)
+
+    try:
+        setting = request.GET['setting']
+        operate = request.GET['operate']
+    except Exception as e:
+        print('请使用规定json格式')
+        return JsonResponse({'error':'请使用规定json格式'})
+
+    # 如果设置的是自动删除功能
+    if setting == 'auto_clean':
+
+        # 判断操作是自动还是手动并改动
+        if operate == 'auto':
+            user['auto_clean'] = 1
+            # 更新数据库
+            try:
+                db.user.update({'_id':ObjectId(uid)}, user)
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse({'error':'服务器有误，请重试'})
+
+            return JsonResponse({'success':'设置自动删除宝物成功！'})
+        elif operate == 'manual':
+            user['auto_clean'] = 0
+            # 更新数据库
+            try:
+                db.user.update({'_id':ObjectId(uid)}, user)
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse({'error':'服务器有误，请重试'})
+
+            return JsonResponse({'success':'设置自动删除宝物成功！'})
+        else:
+            return JsonResponse({'error':'请使用规定json格式'})
+        
+    else:
+        return JsonResponse({'error':'请使用规定json格式'})
+    

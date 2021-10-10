@@ -2,7 +2,7 @@ from TreasureHuntGame.settings import db
 from bson.objectid import ObjectId
 from django.http.response import JsonResponse
 
-# user文档
+# user文档格式
 def create_user(username, password):
     return {
         'username':username,
@@ -19,6 +19,7 @@ def create_user(username, password):
         'auto_clean':0,
     }
 
+# item文档格式
 def create_item(item_type):
     return {
         'buid':'',
@@ -32,9 +33,11 @@ def create_item(item_type):
         'price':0,
     }
 
+# 获得items
 def get_items(times, lucky_value):
     import numpy as np
     import random
+    import math
 
     # 构建item资源池
     items_all_num = 100000
@@ -43,7 +46,7 @@ def get_items(times, lucky_value):
     for item_type in item_list:
         if item_type['myid'] != 0:
             prob = float(item_type['prob'])
-            num = int(prob * (1+lucky_value*0.02) * items_all_num) # 可能性算法
+            num = int(prob * (1+lucky_value*math.exp(item_type['grade'])*0.0005) * items_all_num) # 可能性算法
             items_poor.extend(list(np.full(num, item_type['myid'])))
     
     # 用0补充
@@ -56,14 +59,42 @@ def get_items(times, lucky_value):
         items.append(create_item(db.item_type.find_one({'myid':int(random.choice(items_poor))})))
     return items
 
+# 删除背包中最差的num个宝物
+def discard_worst(user, num):
+    # 查找最差的num个宝物
+    items = list(db.item.aggregate([
+        {'$match':{'buid':user['_id'], 'state':'backpack'}},
+        {'$project':{'sum':{"$add": ["$work_efficiency", "$lucky_value"] }}},
+        {'$sort':{'sum':1}},
+        {'$limit':num},
+    ]))
+
+    # 将其删除
+    for item in items:
+        db.item.delete_one({'_id':item['_id']})
+
+    # 更新user的信息
+    user['backpack'] -= num
+
+    # # 更新数据库(此部分可在调用此函数的函数里解决，减少一次数据库更改)
+    # try:
+    #     db.user.update({'_id':user['_id']}, user)
+    # except:
+    #     print('--- concurrent write error! ---')
+    #     return JsonResponse({'error':'服务器有误，请重试'})
+
 max_num = 60
 # 检查用户金币是否不足或背包是否有空
 def check_gold_backpack(user, gold, num):
-
+    print(user)
     if user['gold_num'] < gold:
         return False, '金币不足'
     if (user['backpack'] + num) > max_num:
-        return False, '背包空间不足'
+        if 'auto_clean' in user:
+            if user['auto_clean'] == 1:
+                discard_worst(user, num)
+        else:
+            return False, '背包空间不足'
 
     return True, ''
 
@@ -122,3 +153,4 @@ def obj2str(dic):
                     dic_i[i] = str(dic_i[i])
         
     return dic
+
