@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'work',
     'hunt',
     'market',
+    'testproject',
 ]
 
 MIDDLEWARE = [

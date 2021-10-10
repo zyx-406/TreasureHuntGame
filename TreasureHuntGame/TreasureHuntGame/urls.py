@@ -18,6 +18,10 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+
+    # 测试
+    path('test/', include('testproject.urls')),
+
     # 后台管理
     path('admin/', admin.site.urls),
     # 主页/about页

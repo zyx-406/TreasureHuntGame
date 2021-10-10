@@ -2,6 +2,57 @@
 
 本项目为 ECNU_DaSE《当代数据管理系统》第一个Project，本人使用Python重量级框架Django和pymongo构建了整个Web应用(并不使用Django-Models层ORM，但是session记录依然使用Django自带的session记录方法，并未存入MongoDB数据库)。**这是一项可以直接上线去玩的Web应用(类似于原始抽卡游戏)**
 
+- 2021/10/3 - 完成项目整体搭建（还有背包自动删除功能未实现，个人并未学习过前端，因此为了迎合前端样式，POST和GET混用）
+- 2021/10/10 - 新增testproject app，可以通过浏览器直接输入固定形式的请求或用postman GET请求即可完成一些操作(当然也可以全部改成POST版本) **此app(结合function.py)可以直接搭建另一套POST/GET确定的以json为交互的服务,也便于转向flask框架使用**（此app高度整合了所有功能）
+
+---
+浏览器 or postman 需输入url 以及对应参数
+
+操作包括：
+
+url(GET)|操作|参数(json)|返回值(json)
+--|:--:|--:|--:
+127.0.0.1:8000/test/user/|注册/登录/退出登录|{'username':'xxx', 'password':'xxx'}|{'success'or'error':'xxx'}
+127.0.0.1:8000/test/getall/|获取用户所有信息|无参数(获取的是session，因此需先登录)|{'user':如下文档1, 'wearitems':[如下文档2], 'backpackitems':[如下文档2]} 
+127.0.0.1:8000/test/work/|工作|{'work':'work'}(此参数无意义，为后续是否自动工作做准备)|{'success'or'error':'xxx'}
+127.0.0.1:8000/test/hunt/|寻宝|{'times':int}(设定不超过10)|{'success'or'error':'xxx', 'items':[如下文档2]}
+127.0.0.1:8000/test/operate/|佩戴/取下/丢弃|{'f':'wear'or'backpack'or'discard', 'iid':'宝物的id'}|{'success'or'error':'xxx'}
+127.0.0.1:8000/test/market/|浏览/购买/出售/回收|{'f':'view'or'buy'or'sell'or'retrieve', 'iid':'宝物的id'(当f为view时无用), 'price':'int'(仅当f为sell时有用)}|{'success'or'error':'xxx'}
+
+---
+
+文档1
+```
+{
+    'username':username,
+    'password':password,
+    'gold_num':xxxx,
+    'work_efficiency':xx,
+    'lucky_value':xx,
+    'wear':{
+        'tool_num':x,
+        'ornament_num':x,
+        'totipotent_num':x,
+    },
+    'backpack':xx,
+    'auto_clean':xx,
+}
+```
+文档2
+```
+{
+    'buid':xxxx,
+    'name':itemname,
+    'grade':x,
+    'info':'xxxx',
+    'type':x,
+    'work_efficiency':xx,
+    'lucky_value':xx,
+    'state':'xx',
+    'price':xxx,
+}
+```
+
 ## 作业要求：(略有修改)
 
 考虑以下游戏场景：
@@ -82,15 +133,46 @@ ObjectId。
 
 ![user_design](./img/user_design.png)
 
+```
+{
+    'username':username,
+    'password':password,
+    'gold_num':xxxx,
+    'work_efficiency':xx,
+    'lucky_value':xx,
+    'wear':{
+        'tool_num':x,
+        'ornament_num':x,
+        'totipotent_num':x,
+    },
+    'backpack':xx,
+    'auto_clean':xx,
+}
+```
+
 ### 物品(item)
 
 ![item_design](./img/item_design.png)
+
+```
+{
+    'buid':xxxx,
+    'name':itemname,
+    'grade':x,
+    'info':'xxxx',
+    'type':x,
+    'work_efficiency':xx,
+    'lucky_value':xx,
+    'state':'xx',
+    'price':xxx,
+}
+```
 
 ### 物品种类(item_type)
 
 ![item_type_design](./img/item_type_design.png)
 
-## 页面设计
+## 页面设计(前端样式)
 
 ### 登录
 登录界面单纯抄模板。
