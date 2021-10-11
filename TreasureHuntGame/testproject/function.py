@@ -192,7 +192,8 @@ def auto_work(uid):
 
     # 更新user数据库
     try:
-        db.user.update({'_id':ObjectId(uid)}, user)
+        db.user.update_one({'_id':ObjectId(uid)}, user)
+        # db.user.update_one({'_id':ObjectId(uid)}, {'$inc':{'gold_num':(10*user['work_efficiency'])}})
         print(uid, ' 自动工作一次')
     except Exception as e:
         print('工作失败')

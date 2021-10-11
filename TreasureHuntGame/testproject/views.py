@@ -140,6 +140,7 @@ def test_work_view(request):
             # 更新user数据库
             try:
                 db.user.update({'_id':ObjectId(uid)}, user)
+                # db.user.update_one({'_id':ObjectId(uid)}, {'$inc':{'gold_num':(10*user['work_efficiency'])}})
                 return JsonResponse({'success':'成功工作，金币增加了'})
             except Exception as e:
                 print('--- concurrent write error! ---')
@@ -171,8 +172,6 @@ def test_hunt_view(request):
     if flag is False:
         return JsonResponse({'error':warning})
 
-    user['gold_num'] -= 10*times
-
     # 根据次数和幸运值获取宝物
     items = get_items(times, int(user['lucky_value']))
 
@@ -185,12 +184,13 @@ def test_hunt_view(request):
             print('--- concurrent write error! ---')
             return JsonResponse(SERVER_ERROR)
 
-        # 更改user的背包中宝物个数
-        user['backpack'] += 1
-
     # 更新user数据库
     try:
-        db.user.update({'_id':ObjectId(uid)}, user)
+        db.user.update_one({'_id':ObjectId(uid)}, 
+        {'$inc':{
+            'gold_num':-10*times,
+            'backpack':1,
+        }})
     except Exception as e:
         print('--- concurrent write error! ---')
         return JsonResponse(SERVER_ERROR)
@@ -234,15 +234,15 @@ def test_operate_view(request):
             return JsonResponse({'error':'此宝物正在挂牌中，无法佩戴'})
         
         else:
-            item['state'] = 'wear'
-            user['work_efficiency'] += item['work_efficiency']
-            user['lucky_value'] += item['lucky_value']
-            user['wear'][(item['type']+'_num')] += 1
-
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(uid)}, user)
-                db.item.update({'_id':ObjectId(iid)}, item)
+                db.user.update_one({'_id':ObjectId(uid)}, 
+                {'$inc':{
+                    'work_efficiency':item['work_efficiency'],
+                    'lucky_value':item['lucky_value'],
+                    'wear.'+item['type']+'_num':1,
+                }})
+                db.item.update_one({'_id':ObjectId(iid)}, {'$set':{'state':'wear'}})
             except Exception as e:
                 print('--- concurrent write error! ---')
                 return JsonResponse(SERVER_ERROR)
@@ -253,15 +253,15 @@ def test_operate_view(request):
     elif f == 'backpack':
         # 判断是否佩戴中
         if item['state'] == 'wear':
-            item['state'] = 'backpack'
-            user['work_efficiency'] -= item['work_efficiency']
-            user['lucky_value'] -= item['lucky_value']
-            user['wear'][(item['type']+'_num')] -= 1
-
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(uid)}, user)
-                db.item.update({'_id':ObjectId(iid)}, item)
+                db.user.update_one({'_id':ObjectId(uid)}, 
+                {'$inc':{
+                    'work_efficiency':-item['work_efficiency'],
+                    'lucky_value':-item['lucky_value'],
+                    'wear.'+item['type']+'_num':-1,
+                }})
+                db.item.update_one({'_id':ObjectId(iid)}, {'$set':{'state':'backpack'}})
             except Exception as e:
                 print('--- concurrent write error! ---')
                 return JsonResponse({SERVER_ERROR})
@@ -280,13 +280,9 @@ def test_operate_view(request):
             return JsonResponse({'error':'此宝物正在挂牌中，无法丢弃'})
         
         else:
-
-            # 将背包信息更新
-            user['backpack'] -= 1
-
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(uid)}, user)
+                db.user.update_one({'_id':ObjectId(uid)}, {'$inc':{'backpack':-1}})
                 db.item.delete_one({'_id':ObjectId(iid)})
             except Exception as e:
                 print('--- concurrent write error! ---')
@@ -340,26 +336,27 @@ def test_market_view(request):
             if flag is False:
                 return JsonResponse({'error':warning})
 
-            # 更新user信息
-            # 更新卖家
-            seller = db.user.find_one({'_id':ObjectId(item['buid'])})
-            seller['gold_num'] += item['price']
-            seller['backpack'] -= 1
-
-            # 更新买家
-            user['gold_num'] -= item['price']
-            user['backpack'] += 1
-
-            # 更新item信息
-            item['state'] = 'backpack'
-            item['buid'] = ObjectId(uid)
-            item['price'] = 0
-
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(seller['_id'])}, seller)
-                db.user.update({'_id':ObjectId(uid)}, user)
-                db.item.update({'_id':ObjectId(iid)}, item)
+                # 更新卖家
+                db.user.update_one({'_id':ObjectId(item['buid'])}, 
+                {'$inc':{
+                    'gold_num':item['price'],
+                    'backpack':-1,
+                }})
+                # 更新买家
+                db.user.update({'_id':ObjectId(uid)}, 
+                {'$inc':{
+                    'gold_num':-item['price'],
+                    'backpack':1,
+                }})
+                # 更新item信息
+                db.item.update({'_id':ObjectId(iid)}, 
+                {'$set':{
+                    'buid':ObjectId(uid),
+                    'state':'backpack',
+                    'price':0,
+                }})
             except Exception as e:
                 print('--- concurrent write error! ---')
                 return JsonResponse(SERVER_ERROR)
@@ -388,13 +385,14 @@ def test_market_view(request):
 
         # 判断是否在背包中(或者正在售卖，此时为更新价格)
         if item['state'] == 'backpack' or item['state'] == 'onsale':
-            
-            item['state'] = 'onsale'
-            item['price'] = price
 
             # 更新数据库
             try:
-                db.item.update({'_id':ObjectId(iid)}, item)
+                db.item.update({'_id':ObjectId(iid)}, 
+                {'$set':{
+                    'state':'onsale',
+                    'price':price,
+                }})
             except Exception as e:
                 print('--- concurrent write error! ---')
                 return JsonResponse(SERVER_ERROR)
@@ -414,12 +412,13 @@ def test_market_view(request):
         # 判断是否在onsale中
         if item['state'] == 'onsale':
 
-            item['state'] = 'backpack'
-            item['price'] = 0
-
             # 更新数据库
             try:
-                db.item.update({'_id':ObjectId(iid)}, item)
+                db.item.update({'_id':ObjectId(iid)}, 
+                {'$set':{
+                    'state':'backpack',
+                    'price':0,
+                }})
             except Exception as e:
                 print('--- concurrent write error! ---')
                 return JsonResponse(SERVER_ERROR)
