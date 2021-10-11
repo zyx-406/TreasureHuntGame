@@ -98,6 +98,22 @@ try:
 except Exception as e:
     print('--- connect to database error! ---')
 
+# 自动工作的定时
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from testproject.function import auto_work
+
+sched = BackgroundScheduler()
+try:
+    sched.start()
+    print('sched start success!')
+except:
+    print('sched start error!')
+trigger = IntervalTrigger(minutes=10)
+
+users = db.user.find({'auto_work':1})
+for user in users:
+    sched.add_job(auto_work, trigger, args=[str(user['_id'])], id=str(user['_id']))
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

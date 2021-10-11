@@ -1,18 +1,20 @@
 from bson.objectid import ObjectId
+from apscheduler.schedulers.background import BackgroundScheduler
 from django.http.response import JsonResponse
-from TreasureHuntGame.settings import db
+from TreasureHuntGame.settings import db, sched, trigger
 from django.shortcuts import render
 
-from .function import check_login, get_user, check_gold_backpack, check_wear, create_user, get_items, obj2str
+from .function import check_db, check_login, get_user, check_gold_backpack, check_wear, create_user, get_items, obj2str, auto_work
+
+SERVER_ERROR = {
+    'error':'服务器有误，请重试',
+}
 
 # Create your views here.
 
 @check_login
+@check_db
 def test_getall_view(request):
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
-    
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
 
@@ -26,11 +28,8 @@ def test_getall_view(request):
         'backpackitems':obj2str(backpackitems),
     })
 
+@check_db
 def test_user_view(request):
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
-
     # 获取json文件内容
     try:
         f, username, password = request.GET['f'], request.GET['username'], request.GET['password']
@@ -55,7 +54,7 @@ def test_user_view(request):
 
         except Exception as e:
             print('--- concurrent write error! ---')
-            return JsonResponse({'error':'服务器有误，请重试'})
+            return JsonResponse(SERVER_ERROR)
         
         return JsonResponse({'success':'注册成功，请登录'})
 
@@ -91,11 +90,8 @@ def test_user_view(request):
         return JsonResponse({'error':'请使用规定json格式'})
 
 @check_login
+@check_db
 def test_work_view(request):
-    
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
     
     max_gold = 99999
 
@@ -108,28 +104,57 @@ def test_work_view(request):
         print('请使用规定json格式')
         return JsonResponse({'error':'请使用规定json格式'})
 
-    # 更改user数据
-    user['gold_num'] += 10 * user['work_efficiency']
+    if work == 'auto':
+        if user['auto_work'] == 0:
+            try:
+                sched.add_job(auto_work, trigger, args=[uid], id=uid)
+                db.user.update_one({'_id':user['_id']}, {'$set':{'auto_work':1}})
+                return JsonResponse({'success':'自动工作开始，将会每10min为您自动工作一次'})
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse(SERVER_ERROR)
+        else:
+            return JsonResponse({'error':'您已在自动工作中'})
+    
+    elif work == 'manual':
+        if user['auto_work'] == 1:
+            try:
+                sched.remove_job(uid)
+                db.user.update_one({'_id':user['_id']}, {'$set':{'auto_work':0}})
+                return JsonResponse({'success':'自动工作停止'})
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse(SERVER_ERROR)
+        else:
+            return JsonResponse({'error':'您并未开启自动工作'})
+        
+    elif work == 'once':
+        if user['auto_work'] == 0:
+            # 更改user数据
+            user['gold_num'] += 10 * user['work_efficiency']
 
-    # 金币数量能超过上限
-    if user['gold_num'] > max_gold:
-        user['gold_num'] = max_gold
+            # 金币数量能超过上限
+            if user['gold_num'] > max_gold:
+                user['gold_num'] = max_gold
 
-    # 更新user数据库
-    try:
-        db.user.update({'_id':ObjectId(uid)}, user)
-    except Exception as e:
-        print('--- concurrent write error! ---')
-        return JsonResponse({'error':'服务器有误，请重试'})
+            # 更新user数据库
+            try:
+                db.user.update({'_id':ObjectId(uid)}, user)
+                return JsonResponse({'success':'成功工作，金币增加了'})
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse(SERVER_ERROR)
 
-    return JsonResponse({'success':'成功工作，金币增加了'})
+        else:
+            return JsonResponse({'error':'您正在自动工作无法进行手动工作！'})
+    
+    else:
+        print('请使用规定json格式')
+        return JsonResponse({'error':'请使用规定json格式'})
 
 @check_login
+@check_db
 def test_hunt_view(request):
-    
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
 
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
@@ -154,8 +179,11 @@ def test_hunt_view(request):
     # 向数据库插入新的item数据
     for item in items:
         item['buid'] = user['_id']  # 更改属于的用户id
-        db.item.insert_one(item)
-        item['iid'] = item['_id']   # 增加此字段仅方便前端访问(受django模板层限制变量不能以下划线开头)
+        try:
+            db.item.insert_one(item)
+        except Exception as e:
+            print('--- concurrent write error! ---')
+            return JsonResponse(SERVER_ERROR)
 
         # 更改user的背包中宝物个数
         user['backpack'] += 1
@@ -165,7 +193,7 @@ def test_hunt_view(request):
         db.user.update({'_id':ObjectId(uid)}, user)
     except Exception as e:
         print('--- concurrent write error! ---')
-        return JsonResponse({'error':'服务器有误，请重试'})
+        return JsonResponse(SERVER_ERROR)
 
     return JsonResponse({
         'success':'成功获得宝物！以下是您获得的宝物：',
@@ -173,11 +201,8 @@ def test_hunt_view(request):
     })
 
 @check_login
+@check_db
 def test_operate_view(request):
-    
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
 
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
@@ -220,7 +245,7 @@ def test_operate_view(request):
                 db.item.update({'_id':ObjectId(iid)}, item)
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse(SERVER_ERROR)
 
         return JsonResponse({'success':'佩戴成功！'})
     
@@ -239,7 +264,7 @@ def test_operate_view(request):
                 db.item.update({'_id':ObjectId(iid)}, item)
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse({SERVER_ERROR})
         else:
             return JsonResponse({'error':'此宝物并未佩戴！'})
 
@@ -265,7 +290,7 @@ def test_operate_view(request):
                 db.item.delete_one({'_id':ObjectId(iid)})
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse(SERVER_ERROR)
 
         return JsonResponse({'success':'丢弃成功！'})
 
@@ -273,17 +298,16 @@ def test_operate_view(request):
         return JsonResponse({'error':'请使用规定json格式'})
 
 @check_login
+@check_db
 def test_market_view(request):
-    
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
 
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
 
     try:
         f = request.GET['f']
+
+        # 如果只是浏览市场
         if f == 'view':
             items = list(db.item.find({'buid':{'$ne':ObjectId(uid)}, 'state':'onsale'}))
             return JsonResponse({
@@ -338,9 +362,12 @@ def test_market_view(request):
                 db.item.update({'_id':ObjectId(iid)}, item)
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse(SERVER_ERROR)
 
-            return JsonResponse({'success':'成功购买宝物！快去佩戴吧！'})
+            return JsonResponse({
+                'success':'成功购买宝物！快去佩戴吧！',
+                'item':obj2str(item),
+                })
 
         # 若不是onsale
         else:
@@ -370,7 +397,7 @@ def test_market_view(request):
                 db.item.update({'_id':ObjectId(iid)}, item)
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse(SERVER_ERROR)
 
             return JsonResponse({'success':'成功挂牌宝物！等待有缘人购买吧！'})
 
@@ -395,7 +422,7 @@ def test_market_view(request):
                 db.item.update({'_id':ObjectId(iid)}, item)
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
+                return JsonResponse(SERVER_ERROR)
 
             return JsonResponse({'success':'成功回收挂牌宝物！'})
         
@@ -408,10 +435,8 @@ def test_market_view(request):
         return JsonResponse({'error':'请使用规定json格式'})
 
 @check_login
+@check_db
 def test_settings_view(request):
-    # 判断数据库是否连接
-    if db is None:
-        return JsonResponse({'error':'服务器有误，请重试'})
 
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
@@ -428,25 +453,23 @@ def test_settings_view(request):
 
         # 判断操作是自动还是手动并改动
         if operate == 'auto':
-            user['auto_clean'] = 1
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(uid)}, user)
+                db.user.update_one({'_id':ObjectId(uid)}, {'$set':{'auto_clean':1}})
+                return JsonResponse({'success':'设置自动删除宝物成功！'})
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
-
-            return JsonResponse({'success':'设置自动删除宝物成功！'})
+                return JsonResponse(SERVER_ERROR)
+           
         elif operate == 'manual':
-            user['auto_clean'] = 0
             # 更新数据库
             try:
-                db.user.update({'_id':ObjectId(uid)}, user)
+                db.user.update_one({'_id':ObjectId(uid)}, {'$set':{'auto_clean':0}})
+                return JsonResponse({'success':'设置自动删除宝物成功！'})
             except Exception as e:
                 print('--- concurrent write error! ---')
-                return JsonResponse({'error':'服务器有误，请重试'})
-
-            return JsonResponse({'success':'设置自动删除宝物成功！'})
+                return JsonResponse(SERVER_ERROR)
+            
         else:
             return JsonResponse({'error':'请使用规定json格式'})
         

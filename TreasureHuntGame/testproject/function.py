@@ -17,6 +17,7 @@ def create_user(username, password):
         },
         'backpack':0,
         'auto_clean':0,
+        'auto_work':0,
     }
 
 # item文档格式
@@ -122,21 +123,42 @@ def check_wear(user, item):
 
 # 返回username, uid, 和user文档
 def get_user(request):
-
     # 获取session中的username，uid
     username = request.session['username']
     uid = request.session['uid']
-    
     # 从数据库中获取玩家文档
     user = db.user.find_one({'_id':ObjectId(uid)})
-
     return username, uid, user
 
-# 检查用户是否已登录的装饰器
+# 检查(用户是否已登录/用户是否存在)的装饰器
 def check_login(fn):
     def wrap(request, *args, **kwargs):
         if 'username' not in request.session or 'uid' not in request.session:
-            return JsonResponse({'error':'请先登录'})
+            return JsonResponse({'global_error':'请先登录'})
+
+        try:
+            # 获取session中的username，uid
+            username = request.session['username']
+            uid = request.session['uid']
+            # 从数据库中获取玩家文档
+            user = db.user.find_one({'_id':ObjectId(uid)})
+            if user is None:
+                print('--- No this user!!! ---')
+                return JsonResponse({'global_error':'用户不存在'})
+
+        except Exception as e:
+            print('--- No this user!!! ---')
+            return JsonResponse({'global_error':'用户不存在'})
+
+        return fn(request, *args, **kwargs)
+    return wrap
+
+# 检查数据库是否连接的装饰器
+def check_db(fn):
+    def wrap(request, *args, **kwargs):
+        if db is None:
+            print('--- database connect error! ---')
+            return JsonResponse({'global_error':'服务器有误，数据库未连接，请重试'})
         return fn(request, *args, **kwargs)
     return wrap
 
@@ -153,4 +175,57 @@ def obj2str(dic):
                     dic_i[i] = str(dic_i[i])
         
     return dic
+
+# 自动工作job
+def auto_work(uid):
+    max_gold = 99999
+
+    # 获取user文档
+    user = db.user.find_one({'_id':ObjectId(uid)})
+
+    # 更改user数据
+    user['gold_num'] += 10 * user['work_efficiency']
+
+    # 金币数量能超过上限
+    if user['gold_num'] > max_gold:
+        user['gold_num'] = max_gold
+
+    # 更新user数据库
+    try:
+        db.user.update({'_id':ObjectId(uid)}, user)
+        print(uid, ' 自动工作一次')
+    except Exception as e:
+        print('工作失败')
+        print('--- concurrent write error! ---')
+
+
+# # 自动工作schedule
+# def auto_work_sched():
+#     # 自动工作的定时
+#     from apscheduler.schedulers.background import BackgroundScheduler
+#     from apscheduler.triggers.interval import IntervalTrigger
+#     sched = BackgroundScheduler()
+#     try:
+#         sched.start()
+#         print('sched start success!')
+#     except:
+#         print('sched start error!')
+#     trigger = IntervalTrigger(minutes=10)
+
+#     users = db.user.find({'auto_work':1})
+#     for user in users:
+#         sched.add_job(auto_work, trigger, args=[str(user['_id'])], id=str(user['_id']))
+
+
+# # 将数据库的try语句封装，简化代码
+# def try_db_func(func, arg1, arg2=None, success_response={'success':'success'}):
+#     try:
+#         if arg2 is None:
+#             func(arg1)
+#         else:
+#             func(arg1, arg2)
+#         return JsonResponse(success_response)
+#     except:
+#         print('--- concurrent write error! ---')
+#         return JsonResponse({'global_error':'服务器有误，请重试'})
 
