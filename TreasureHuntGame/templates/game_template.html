@@ -19,29 +19,28 @@
     href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
     rel="stylesheet">
 
-  <script src="/static/index_assets/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/game_assets/vendor/jquery/jquery.min.js"></script>
 
   <!-- Vendor CSS Files -->
-  <link href="/static/index_assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/static/index_assets/vendor/icofont/icofont.min.css" rel="stylesheet">
-  <link href="/static/index_assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
-  <link href="/static/index_assets/vendor/owl.carousel/assets/owl.carousel.min.css" rel="stylesheet">
-  <link href="/static/index_assets/vendor/venobox/venobox.css" rel="stylesheet">
+  <link href="/static/game_assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/game_assets/vendor/icofont/icofont.min.css" rel="stylesheet">
+  <link href="/static/game_assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+  <link href="/static/game_assets/vendor/owl.carousel/assets/owl.carousel.min.css" rel="stylesheet">
+  <link href="/static/game_assets/vendor/venobox/venobox.css" rel="stylesheet">
 
   <!-- Template Main CSS File -->
-  <link href="/static/index_assets/css/style.css" rel="stylesheet">
+  <link href="/static/game_assets/css/style.css" rel="stylesheet">
 
 </head>
 
 <body>
 
   {% block header %}
-
   <!-- ======= Header ======= -->
 
   {% block headerfixed %}
   <header id="header" style="background-color: rgba(55, 64, 85, 0.9)" class="fixed-top">
-  {% endblock %}
+    {% endblock %}
     <div class="container d-flex align-items-center">
 
       {% block headertitle %}
@@ -53,14 +52,47 @@
       <nav class="nav-menu d-none d-lg-block" style="height: fit-content;">
         <ul>
           <li><a href="/home/">主页</a></li>
-          <li><a href="/market/">商城</a></li>
-          <li class="drop-down"><a>我的</a>
+          <li class="drop-down"><a>商城</a>
             <ul>
-              <li><a href="#">用户名：{{ username }}</a></li>
+              <li><a id="buy" href="/market/">购买</a></li>
+              <script>
+                document.getElementById("buy").onclick = function () {
+                  window.location.href = "/market/"
+                }
+              </script>
+              <li><a id="sell" href="/market/?f=sell">出售</a></li>
+              <script>
+                document.getElementById("sell").onclick = function () {
+                  window.location.href = "/market/?f=sell"
+                }
+              </script>
+            </ul>
+          </li>
+          <li class="drop-down"><a>{{ username }}</a>
+            <ul>
+              <li class="dropdown-header" style="color: red;">属性</li>
               <li><a href="#">金币：{{ gold_num }}</a></li>
               <li><a href="#">背包宝物数量：{{ backpack }}</a></li>
               <li><a href="#">工作效率：x{{ work_efficiency }}</a></li>
               <li><a href="#">幸运值：{{ lucky_value }}</a></li>
+              <li><a href="#">
+                自动清理：
+                {% if auto_clean == 1 %}
+                开
+                {% else %}
+                关
+                {% endif %}
+              </a></li>
+              <li><a href="#">
+                自动工作：
+                {% if auto_work == 1 %}
+                开
+                {% else %}
+                关
+                {% endif %}
+              </a></li>
+              <li role="separator" class="divider"></li>
+              <li class="dropdown-header" style="color: blue;">操作</li>
               <li><a href="/home/my/">个人</a></li>
               <li><a href="/user/logout/">退出登录</a></li>
             </ul>
@@ -80,7 +112,7 @@
   <br>
 
   {% endblock %}
-  <div class="col-sm-6 col-lg-3 col-6 justify-content-center"></div>
+
   {% block count %}
 
   <!-- ======= Counts Section ======= -->
@@ -95,8 +127,7 @@
         </div>
 
         <div class="col-lg-3 col-6 text-center">
-          <span
-            data-toggle="counter-up">{{ backpack }}</span>
+          <span data-toggle="counter-up">{{ backpack }}</span>
           <p>包中宝物数量(包含佩戴与挂牌)</p>
         </div>
 
@@ -122,18 +153,18 @@
   {% endblock %}
 
   <!-- Vendor JS Files -->
-  <script src="/static/index_assets/vendor/jquery/jquery.min.js"></script>
-  <script src="/static/index_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="/static/index_assets/vendor/jquery.easing/jquery.easing.min.js"></script>
-  <script src="/static/index_assets/vendor/php-email-form/validate.js"></script>
-  <script src="/static/index_assets/vendor/waypoints/jquery.waypoints.min.js"></script>
-  <script src="/static/index_assets/vendor/counterup/counterup.min.js"></script>
-  <script src="/static/index_assets/vendor/owl.carousel/owl.carousel.min.js"></script>
-  <script src="/static/index_assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-  <script src="/static/index_assets/vendor/venobox/venobox.min.js"></script>
+  <script src="/static/game_assets/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/game_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/game_assets/vendor/jquery.easing/jquery.easing.min.js"></script>
+  <script src="/static/game_assets/vendor/php-email-form/validate.js"></script>
+  <script src="/static/game_assets/vendor/waypoints/jquery.waypoints.min.js"></script>
+  <script src="/static/game_assets/vendor/counterup/counterup.min.js"></script>
+  <script src="/static/game_assets/vendor/owl.carousel/owl.carousel.min.js"></script>
+  <script src="/static/game_assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+  <script src="/static/game_assets/vendor/venobox/venobox.min.js"></script>
 
   <!-- Template Main JS File -->
-  <script src="/static/index_assets/js/main.js"></script>
+  <script src="/static/game_assets/js/main.js"></script>
 
 </body>
 

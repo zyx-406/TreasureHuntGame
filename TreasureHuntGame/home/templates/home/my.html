@@ -1,5 +1,59 @@
 {% extends 'game_template.html' %}
 
+{% block count %}
+<style>
+
+  .pagination {
+    display: inline-block;
+    padding-left: 0;
+    margin: 20px 0;
+    border-radius: 4px;
+  }
+
+  .pagination>li {
+    display: inline;
+  }
+
+  .pagination>li>a,
+  .pagination>li>span {
+    position: relative;
+    float: left;
+    padding: 6px 12px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #337ab7;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+  }
+
+  /* .pagination>li>active {
+    position: relative;
+    float: left;
+    padding: 6px 12px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #337ab7;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+  } */
+
+  .pagination>li:first-child>a,
+  .pagination>li:first-child>span {
+    margin-left: 0;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+
+  .pagination>li:last-child>a,
+  .pagination>li:last-child>span {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+</style>
+{% endblock %}
+
 {% block mainbody %}
 
 <!-- ========= Main Body ========== -->
@@ -8,84 +62,109 @@
   <!-- ======= Services Section ======= -->
   <section id="services" class="services">
 
-    <div class="section-title">
-      <h2>用户名: {{ username }}</h2>
-    </div>
-
     <div class="container">
-
-      <div class="section-title">
-        <h2>穿戴</h2>
-      </div>
-
-      <div class="row justify-content-center">
-        {% for item in wearitems %}
-        <div class="col-sm-6 col-lg-3 col-6">
-          <div class="icon-box iconbox-teal">
-            <div class="icon">
-              <i class="bx bxl-joomla"></i>
-            </div>
-            <h4><a href="/home/item?item={{ item.iid }}/">{{ item.name }}</a></h4>
-            <p>星级: {{ item.grade }}</p>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="container">
-
-      <div class="section-title">
-        <h2>背包</h2>
-      </div>
 
       <div class="row">
-        {% for item in backpackitems %}
-        <div class="col-xs-1 col-sm-2 col-lg-3 col-6">
-          <div class="icon-box iconbox-teal">
-            <div id="item{{ item.iid }}" class="icon">
-              <i class="bx bxl-joomla"></i>
+        <div class="col-md-4">
+
+          <div class="section-title">
+            <h2>穿戴</h2>
+          </div>
+
+          <div class="row justify-content-center">
+            {% for item in wearitems %}
+            <div class="col-md-6">
+              <div class="icon-box iconbox-teal icon">
+                <div class="icon">
+                  <i class="bx bxl-joomla"></i>
+                </div>
+                <h4><a href="/home/item?item={{ item.iid }}/">{{ item.name }}</a></h4>
+                <p>星级: {{ item.grade }}</p>
+              </div>
             </div>
-            <script>
-              document.getElementById("item{{ item.iid }}").onclick = function () {
-                window.location.href = "/home/item?item={{ item.iid }}/";
-              }
-            </script>
+            {% endfor %}
+          </div>
 
-            <h5><a href="/home/item/?item={{ item.iid }}/">{{ item.name }}</a></h5>
+        </div>
 
-            {% if item.state == 'onsale' %}
-            <h6 style="color: gold;">正在挂牌</h6>
-            {% endif %}
+        <div class="col-md-8">
+          <div class="section-title">
+            <h2>背包</h2>
+          </div>
 
-            <p>星级: {{ item.grade }}</p>
+          <div class="row">
+            {% for item in backpackitems %}
+            <div class="col-md-3">
+              <div class="icon-box iconbox-teal">
+                <div id="item{{ item.iid }}" class="icon">
+                  <i class="bx bxl-joomla"></i>
+                </div>
+                <script>
+                  document.getElementById("item{{ item.iid }}").onclick = function () {
+                    window.location.href = "/home/item?item={{ item.iid }}/";
+                  }
+                </script>
 
-            {% if item.state == 'backpack' %}
-            <button class="btn btn-defalut btn-sm" style="color: red;" onclick="drop('{{ item.iid }}');">丢弃</button>
-            {% endif %}
+                <h5><a href="/home/item/?item={{ item.iid }}/">{{ item.name }}</a></h5>
+
+                {% if item.state == 'onsale' %}
+                <h6 style="color: gold;">正在挂牌</h6>
+                {% endif %}
+
+                <p>星级: {{ item.grade }}</p>
+
+                {% if item.state == 'backpack' %}
+                <button class="btn btn-defalut btn-sm" style="color: red;" onclick="drop('{{ item.iid }}');">丢弃</button>
+                {% endif %}
+
+              </div>
+            </div>
+            {% endfor %}
 
           </div>
+
+          <div class="text-center">
+            <ul class="pagination justify-content-center">
+              {% if backpackitems.has_previous %}
+              <li><a href="/home/my/?page={{ backpackitems.previous_page_number }}">&lt;</a></li>
+              {% endif %}
+              {% for i in page_range %}
+              {% if i == backpackitems.number %}
+              <li>
+                <a><b style="color: red;">{{ i }}</b></a>
+              </li>
+              {% else %}
+              <li><a href="/home/my/?page={{ i }}">{{ i }}</a></li>
+              {% endif %}
+              {% endfor %}
+              {% if backpackitems.has_next %}
+              <li><a href="/home/my/?page={{ backpackitems.next_page_number }}">&gt;</a></li>
+              {% endif %}
+            </ul>
+          </div>
+
         </div>
-        {% endfor %}
+
       </div>
 
-      <script type="text/javascript">
-        function drop(iid) {
-          $.ajax({
-            url: '/home/item/',
-            type: 'GET',
-            data: {
-              'f': "drop",
-              'item': iid,
-            },
-            success: function () {
-              window.location.reload();
-            }
-          });
-        }
-      </script>
-      
     </div>
+
+    <script type="text/javascript">
+      function drop(iid) {
+        $.ajax({
+          url: '/home/item/',
+          type: 'GET',
+          data: {
+            'f': "drop",
+            'item': iid,
+          },
+          success: function () {
+            window.location.reload();
+          }
+        });
+      }
+    </script>
+
 
   </section><!-- End Services Section -->
 

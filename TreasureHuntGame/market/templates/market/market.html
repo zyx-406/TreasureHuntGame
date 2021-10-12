@@ -1,107 +1,200 @@
 {% extends 'game_template.html' %}
 
 {% block headerfixed %}
-<header id="header" class="fixed-top">
-{% endblock %}
+<header id="header" style="background-color: rgba(55, 64, 85, 0.9)" class="fixed-top">
+  {% endblock %}
 
-{% block headertitle %}
-<h1 class="logo mr-auto"><a href="/index">商城</a></h1>
-{% endblock %}
+  {% block headertitle %}
+  <h1 class="logo mr-auto"><a href="/index">寻宝商城-{{ f }}</a></h1>
+  {% endblock %}
 
-{% block hero %}
 
-<!-- ======= Hero Section ======= -->
-<section id="hero" class="d-flex align-items-center justify-content-center">
-  <div class="container position-relative">
-    <h1>欢迎来到商城</h1>
-    <h2>在商城中您可以购买或出售宝物</h2>
-    <!-- <a href="/market/" class="btn-get-started scrollto">购买</a> -->
-    <a href="/market/" id="buy" class="btn-get-started scrollto">购买</a>
-    <script>
-      document.getElementById("buy").onclick = function () {
-        window.location.href = "/market/#counts"
-      }
-    </script>
-    <!-- <a href="/market/?f=sell" class="btn-get-started scrollto">出售</a> -->
-    <a href="/market/?f=sell" id="sell" class="btn-get-started scrollto">出售</a>
-    <script>
-      document.getElementById("sell").onclick = function () {
-        window.location.href = "/market/?f=sell#counts"
-      }
-    </script>
-  </div>
-</section><!-- End Hero -->
 
-{% endblock %}
+  {% block count %}
 
-{% block count %}
-
-<!-- ======= Counts Section ======= -->
-<section id="counts" class="counts section-bg">
-  <div class="container">
-
-    <div class="row counters">
-
-      <div class="col-lg-3 col-6 text-center">
-        <span data-toggle="counter-up">{{ total }}</span>
-        <p>商品总数</p>
-      </div>
-
-      <div class="col-lg-3 col-6 text-center">
-        <span data-toggle="counter-up">{{ tool }}</span>
-        <p>工具数量</p>
-      </div>
-
-      <div class="col-lg-3 col-6 text-center">
-        <span data-toggle="counter-up">{{ ornament }}</span>
-        <p>饰品数量</p>
-      </div>
-
-      <div class="col-lg-3 col-6 text-center">
-        <span data-toggle="counter-up">{{ totipotent }}</span>
-        <p>全能宝物数量</p>
-      </div>
-
-    </div>
-
-  </div>
-</section><!-- End Counts Section -->
-
-{% endblock %}
-
-{% block mainbody %}
-
-<!-- ========= Main Body ========== -->
-<main id="main">
-
-  <!-- ======= Services Section ======= -->
-  <section id="services" class="services">
+  <!-- ======= Counts Section ======= -->
+  <section id="counts" class="counts section-bg">
     <div class="container">
 
-      <div class="section-title">
-        <h2>{{ f }}</h2>
-        <p>您可通过点击每张图片下文字进入具体信息页进行具体操作</p>
-      </div>
+      <div class="row counters">
 
-      <div class="row">
-        {% for item in items %}
-        <div class="col-sm-6 col-lg-3 col-6">
-          <div class="icon-box iconbox-teal">
-            <div class="icon">
-              <i class="bx bxl-joomla"></i>
-            </div>
-            <h4><a href="/market/item?item={{ item.iid }}/">{{ item.name }}</a></h4>
-            {% if item.state == 'onsale' %}
-            <h5 style="color: gold;">价格: {{ item.price }}</h5>
-            {% endif %}
-            <p>星级: {{ item.grade }}</p>
-          </div>
+        <div class="col-lg-3 col-6 text-center">
+          <span data-toggle="counter-up">{{ total }}</span>
+          <p>商品总数</p>
         </div>
-        {% endfor %}
+
+        <div class="col-lg-3 col-6 text-center">
+          <span data-toggle="counter-up">{{ tool }}</span>
+          <p>工具数量</p>
+        </div>
+
+        <div class="col-lg-3 col-6 text-center">
+          <span data-toggle="counter-up">{{ ornament }}</span>
+          <p>饰品数量</p>
+        </div>
+
+        <div class="col-lg-3 col-6 text-center">
+          <span data-toggle="counter-up">{{ totipotent }}</span>
+          <p>全能宝物数量</p>
+        </div>
+
       </div>
+
     </div>
-  </section><!-- End Services Section -->
+  </section><!-- End Counts Section -->
 
-</main><!-- End #main -->
+  {% endblock %}
 
-{% endblock %}
+  {% block mainbody %}
+
+  <!-- ========= Main Body ========== -->
+  <main id="main">
+
+    <!-- ======= Services Section ======= -->
+    <section id="services" class="services">
+      <div class="container">
+
+        <div class="row">
+          {% for item in items %}
+          <div class="col-md-2">
+            <div class="icon-box iconbox-teal">
+              <div class="icon">
+                <i class="bx bxl-joomla"></i>
+              </div>
+              <!-- <h4><a href="/market/item?item={{ item.iid }}/">{{ item.name }}</a></h4> -->
+              <h4><a role="button" data-toggle="modal" data-target="#21">{{ item.name }}</a></h4>
+              <button class="btn btn-primary" data-toggle="modal" data-target="#21">开始演示模态框</button>
+
+              {% if item.state == 'onsale' %}
+              <h5 style="color: gold;">价格: {{ item.price }}</h5>
+              {% endif %}
+              <p>星级: {{ item.grade }}</p>
+            </div>
+          </div>
+
+          <!-- 宝物模态框（Modal） -->
+          <div class="modal fade" id="21" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                  </button>
+                  <h4 class="modal-title text-center" id="myModalLabel">
+                    {{ item.name }}
+                  </h4>
+                </div>
+                <div class="modal-body">
+                  <div class="text-center">
+                    <div class="row">
+                      <div class="col-md-8 col-md-offset-2">
+                        <div class="text-center">
+                          <h3> 宝物名称：{{ item.name }} </h3>
+                        </div><br>
+                        <div class="text-center">
+                          <h3> 星级: {{ item.grade }} </h3>
+                        </div><br>
+                        <div class="text-center">
+                          <h3> 功能: 工作效率+{{ item.work_efficiency }} | 幸运值+{{ item.lucky_value }} </h3>
+                        </div><br>
+                        <div class="text-center">
+                          <h3> 介绍：{{ item.info }} </h3>
+                        </div><br>
+
+                        {% if user.uid == item.buid %}
+
+                        <form action="/market/item/" method="post" class="signin-form">
+                          <input type="hidden" name="item" id="iid" value="{{ item.iid }}">
+                          <div class="form-group">
+                            <input type="number" class="form-control" placeholder="原价格:{{ item.price }}" name='price'
+                              id="price" required>
+                          </div>
+                          <div class="form-group">
+                            <button class="form-control btn btn-primary submit px-1" onclick="sell()">出售(更新挂牌价)</button>
+                          </div>
+                        </form>
+
+                        {% endif %}
+
+                        <div class="row justify-content-center">
+                          {% if item.state == 'onsale' and user.uid != item.buid %}
+                          <div class="col-md-4">
+                            <button class="btn btn-primary btn-group-justified" onclick="buy()">购买</button>
+                          </div>
+                          {% endif %}
+
+                          {% if item.state == 'onsale' and user.uid == item.buid %}
+                          <div class="col-md-4">
+                            <button class="btn btn-danger btn-group-justified" onclick="retrieve()">回收</button>
+                          </div>
+                          {% endif %}
+                        </div>
+
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div><!-- /.modal-content -->
+              </div><!-- /.modal -->
+            </div>
+          </div>
+          
+          {% endfor %}
+        </div>
+
+        <script type="text/javascript">
+          function sell(iid) {
+            var iid = $("#iid").val();
+            var price = $("#price").val();
+
+            $.ajax({
+              url: '/market/item/',
+              type: 'GET',
+              data: {
+                'item': iid,
+                'price': price,
+              },
+              success: function () {
+                window.location.reload();
+              }
+            });
+          }
+
+          function buy(iid) {
+            $.ajax({
+              url: '/market/item/',
+              type: 'GET',
+              data: {
+                'item': iid,
+                'price': price,
+              },
+              success: function () {
+                window.location.reload();
+              }
+            });
+          }
+
+          function retrieve(iid) {
+            $.ajax({
+              url: '/market/item/',
+              type: 'GET',
+              data: {
+                'item': iid,
+                'price': price,
+              },
+              success: function () {
+                window.location.reload();
+              }
+            });
+          }
+        </script>
+
+
+      </div>
+    </section><!-- End Services Section -->
+
+  </main><!-- End #main -->
+
+  {% endblock %}

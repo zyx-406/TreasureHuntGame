@@ -1,4 +1,5 @@
 from django.http.response import HttpResponse, HttpResponseRedirect, HttpResponseRedirectBase
+from django.core.paginator import Paginator
 from django.shortcuts import render
 from bson.objectid import ObjectId
 from user.views import check_login, server_error, check_wear, get_user
@@ -29,6 +30,8 @@ def my_view(request):
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
 
+    page_num = request.GET.get('page', 1)
+
     # 从数据库中获取玩家的items
     wearitems = list(db.item.find({'buid':ObjectId(uid), 'state':'wear'}))
     for item in wearitems:
@@ -38,7 +41,11 @@ def my_view(request):
     for item in backpackitems:
         item['iid'] = item['_id']
 
-    return render(request, 'home/my.html', dict({'wearitems':wearitems, 'backpackitems':backpackitems}, **user))
+    paginator = Paginator(backpackitems, 8)
+
+    backpackitems_page = paginator.page(page_num)
+
+    return render(request, 'home/my.html', dict({'wearitems':wearitems, 'backpackitems':backpackitems_page, 'page_range':paginator.page_range, 'page_num':page_num}, **user))
 
 @check_login
 def item_view(request):
