@@ -43,6 +43,9 @@ def market_view(request):
 
                 for item in items:
                     item['iid'] = item['_id']   # 增加此字段仅方便前端访问(受django模板层限制变量不能以下划线开头)
+                    item['buid'] = str(item['buid'])
+
+                user['uid'] = str(user['_id'])
 
                 dic = {'f':'出售',  'total':total, 'tool':tool, 'ornament':ornament, 'grade3':grade3, 'items':items}
                 return render(request, 'market/market.html', dict(dic, **user))
@@ -56,6 +59,9 @@ def market_view(request):
                 
             for item in items:
                     item['iid'] = item['_id']   # 增加此字段仅方便前端访问(受django模板层限制变量不能以下划线开头)
+                    item['buid'] = str(item['buid'])
+
+            user['uid'] = str(user['_id'])
 
             dic = {'f':'购买', 'total':total, 'tool':tool, 'ornament':ornament, 'totipotent':totipotent, 'items':items}
             return render(request, 'market/market.html', dict(dic, **user))

@@ -40,10 +40,13 @@ def my_view(request):
     backpackitems = list(db.item.find({'$or':[{'buid':ObjectId(uid),'state':'backpack'}, {'buid':ObjectId(uid),'state':'onsale'}]}))
     for item in backpackitems:
         item['iid'] = item['_id']
+        # item['buid'] = str(item['buid'])
 
     paginator = Paginator(backpackitems, 8)
 
     backpackitems_page = paginator.page(page_num)
+
+    user['uid'] = user['_id'] # 便于前端访问
 
     return render(request, 'home/my.html', dict({'wearitems':wearitems, 'backpackitems':backpackitems_page, 'page_range':paginator.page_range, 'page_num':page_num}, **user))
 

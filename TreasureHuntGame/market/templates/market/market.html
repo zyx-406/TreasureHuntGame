@@ -62,9 +62,13 @@
                 <i class="bx bxl-joomla"></i>
               </div>
               <!-- <h4><a href="/market/item?item={{ item.iid }}/">{{ item.name }}</a></h4> -->
-              <h4><a role="button" data-toggle="modal" data-target="#21">{{ item.name }}</a></h4>
-              <button class="btn btn-primary" data-toggle="modal" data-target="#21">开始演示模态框</button>
-
+              <h4><a id="btn{{item.iid}}" role="button" data-toggle="modal"
+                  data-target="#item{{item.iid}}">{{ item.name }}</a></h4>
+              <script>
+                $("#btn{{item.iid}}").click(function () {
+                  $('#21').modal("show");
+                });
+              </script>
               {% if item.state == 'onsale' %}
               <h5 style="color: gold;">价格: {{ item.price }}</h5>
               {% endif %}
@@ -73,7 +77,21 @@
           </div>
 
           <!-- 宝物模态框（Modal） -->
-          <div class="modal fade" id="21" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+
+          <style>
+            .modal {
+              left: 50%;
+              top: 55%;
+              transform: translate(-50%, -50%);
+              min-width: 70%;
+              /*这个比例可以自己按需调节*/
+              overflow: visible;
+              bottom: inherit;
+              right: inherit;
+            }
+          </style>
+
+          <div class="modal fade" id="item{{item.iid}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -81,119 +99,132 @@
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                     &times;
                   </button>
-                  <h4 class="modal-title text-center" id="myModalLabel">
+                  <!-- <h4 class="modal-title text-center" id="myModalLabel">
                     {{ item.name }}
-                  </h4>
+                  </h4> -->
                 </div>
                 <div class="modal-body">
                   <div class="text-center">
                     <div class="row">
-                      <div class="col-md-8 col-md-offset-2">
+                      <div class="col-md-12 justify-content-center">
+
                         <div class="text-center">
-                          <h3> 宝物名称：{{ item.name }} </h3>
+                          <h3> 宝物名称:</h3><br>
+                          <h2><b style="color: cyan;">{{ item.name }}</b> </h2>
                         </div><br>
                         <div class="text-center">
-                          <h3> 星级: {{ item.grade }} </h3>
-                        </div><br>
-                        <div class="text-center">
-                          <h3> 功能: 工作效率+{{ item.work_efficiency }} | 幸运值+{{ item.lucky_value }} </h3>
-                        </div><br>
-                        <div class="text-center">
-                          <h3> 介绍：{{ item.info }} </h3>
+                          <h4> 星级: <b style="color: red;">{{ item.grade }}</b> </h4>
                         </div><br>
 
-                        {% if user.uid == item.buid %}
-
-                        <form action="/market/item/" method="post" class="signin-form">
-                          <input type="hidden" name="item" id="iid" value="{{ item.iid }}">
-                          <div class="form-group">
-                            <input type="number" class="form-control" placeholder="原价格:{{ item.price }}" name='price'
-                              id="price" required>
-                          </div>
-                          <div class="form-group">
-                            <button class="form-control btn btn-primary submit px-1" onclick="sell()">出售(更新挂牌价)</button>
-                          </div>
-                        </form>
-
+                        {% if item.state == 'onsale' %}
+                        <div class="text-center">
+                          <h4> 价格: <b style="color: goldenrod;">{{ item.price }}</b> </h4>
+                        </div><br>
                         {% endif %}
 
+                        <div class="text-center">
+                          <h5> 功能: 工作效率<b style="color: gold;">+{{ item.work_efficiency }}</b> |
+                            幸运值<b style="color: gold;">+{{ item.lucky_value }}</b> </h5>
+                        </div><br>
+                        <div class="text-center">
+                          <p> 介绍：{{ item.info }}</p>
+                        </div><br>
+
                         <div class="row justify-content-center">
-                          {% if item.state == 'onsale' and user.uid != item.buid %}
-                          <div class="col-md-4">
-                            <button class="btn btn-primary btn-group-justified" onclick="buy()">购买</button>
+
+                          {% if item.state == 'onsale' and uid != item.buid %}
+                          <div class="col-md-6">
+                            <button class="form-control btn btn-primary submit px-1"
+                              onclick="buy('{{item.iid}}')">购买</button>
                           </div>
                           {% endif %}
 
-                          {% if item.state == 'onsale' and user.uid == item.buid %}
-                          <div class="col-md-4">
-                            <button class="btn btn-danger btn-group-justified" onclick="retrieve()">回收</button>
+                          {% if uid == item.buid %}
+                          <div class="col-md-6">
+                            <form class="signin-form">
+                              <div class="form-group">
+                                <input type="number" class="form-control" placeholder="请在此处输入挂牌价格" name='price' id="price">
+                              </div>
+                              <div class="form-group">
+                                <div class="container">
+                                  <div class="row">
+                                    <button class="col form-control btn btn-primary"
+                                      onclick="sell('{{item.iid}}')">出售</button>
+                                    {% if item.state == 'onsale' and uid == item.buid %}
+                                    <button class="col form-control btn btn-success"
+                                      onclick="retrieve('{{item.iid}}')">回收</button>
+                                    {% endif %}
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
                           </div>
                           {% endif %}
+
                         </div>
 
-                      </div>
+                        <br>
 
+                      </div>
                     </div>
                   </div>
-
                 </div><!-- /.modal-content -->
               </div><!-- /.modal -->
             </div>
           </div>
-          
+
           {% endfor %}
         </div>
-
-        <script type="text/javascript">
-          function sell(iid) {
-            var iid = $("#iid").val();
-            var price = $("#price").val();
-
-            $.ajax({
-              url: '/market/item/',
-              type: 'GET',
-              data: {
-                'item': iid,
-                'price': price,
-              },
-              success: function () {
-                window.location.reload();
-              }
-            });
-          }
-
-          function buy(iid) {
-            $.ajax({
-              url: '/market/item/',
-              type: 'GET',
-              data: {
-                'item': iid,
-                'price': price,
-              },
-              success: function () {
-                window.location.reload();
-              }
-            });
-          }
-
-          function retrieve(iid) {
-            $.ajax({
-              url: '/market/item/',
-              type: 'GET',
-              data: {
-                'item': iid,
-                'price': price,
-              },
-              success: function () {
-                window.location.reload();
-              }
-            });
-          }
-        </script>
-
-
       </div>
     </section><!-- End Services Section -->
+
+    <script type="text/javascript">
+      function sell(iid) {
+        var price = $("#price").val();
+
+        $.ajax({
+          url: '/market/item/',
+          type: 'GET',
+          data: {
+            'f': 'sell',
+            'item': iid,
+            'price': price,
+          },
+          success: function () {
+            window.location.reload();
+          }
+        });
+      }
+
+      function buy(iid) {
+        $.ajax({
+          url: '/market/item/',
+          type: 'GET',
+          data: {
+            'f': 'buy',
+            'item': iid,
+          },
+          success: function () {
+            window.location.reload();
+          }
+        });
+      }
+
+      function retrieve(iid) {
+        $.ajax({
+          url: '/market/item/',
+          type: 'GET',
+          data: {
+            'f': 'retrieve',
+            'item': iid,
+          },
+          success: function () {
+            window.location.reload();
+          }
+        });
+      }
+    </script>
+
 
   </main><!-- End #main -->
 
