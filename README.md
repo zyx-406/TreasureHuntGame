@@ -219,9 +219,8 @@ ObjectId。
 
 ### 宝物
 将宝物界面使用同一套模态框进行呈现，较为方便直观。且个别地方减少http请求
-![tmy](./img/treasure_my.png)
-![tbuy](./img/treasure_buy.png)
-![tsell](./img/treasure_sell.png)
+
+![tmy](./img/treasure_my.png)![tbuy](./img/treasure_buy.png)![tsell](./img/treasure_sell.png)
 
 ## 功能实现
 
