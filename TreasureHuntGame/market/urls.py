@@ -22,8 +22,6 @@ urlpatterns = [
     
     # 商城主页
     path('', views.market_view),
-    # 商品页面
-    path('item/', views.item_view),
-
+    
     # ...
 ]

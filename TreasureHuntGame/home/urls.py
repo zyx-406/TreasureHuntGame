@@ -22,7 +22,6 @@ urlpatterns = [
     # 用户个人界面 功能主页
     path('', views.home_view),
     path('my/', views.my_view),
-    path('item/', views.item_view),
 
     # ...
 ]

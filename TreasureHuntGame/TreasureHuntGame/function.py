@@ -2,6 +2,12 @@ from TreasureHuntGame.settings import db
 from bson.objectid import ObjectId
 from django.http.response import JsonResponse
 
+
+SERVER_ERROR = {
+    'error':'服务器有误，请重试',
+}
+
+
 # user文档格式
 def create_user(username, password):
     return {
@@ -84,7 +90,7 @@ def discard_worst(user, num):
 max_num = 60
 # 检查用户金币是否不足或背包是否有空
 def check_gold_backpack(user, gold, num):
-    print(user)
+    # print(user)
     if user['gold_num'] < gold:
         return False, '金币不足'
     if (user['backpack'] + num) > max_num:

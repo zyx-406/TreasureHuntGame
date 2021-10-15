@@ -75,25 +75,72 @@
               <li><a href="#">背包宝物数量：{{ backpack }}</a></li>
               <li><a href="#">工作效率：x{{ work_efficiency }}</a></li>
               <li><a href="#">幸运值：{{ lucky_value }}</a></li>
+
+              <li role="separator" class="divider"></li>
+              <li class="dropdown-header" style="color: blue;">操作</li>
+
+              <li><a href="/home/my/">个人</a></li>
+
               <li><a href="#">
                 自动清理：
                 {% if auto_clean == 1 %}
                 开
+                <!-- <a href="#" onclick="autoclean()">开</a> -->
+                <!-- <script type="text/javascript">
+                  function work() {
+                    $.ajax({
+                      url: '/settings/',
+                      type: 'POST',
+                      data: {
+                        'work': 'once',
+                      },
+                      success: function (data) {
+                        location.reload();
+                      }
+                    });
+                  }
+                </script> -->
                 {% else %}
-                关
+                <a>关</a>
                 {% endif %}
               </a></li>
-              <li><a href="#">
+            <li><a href="">
                 自动工作：
                 {% if auto_work == 1 %}
-                开
+                <b onclick="manualwork()">开</b>
+                <script type="text/javascript">
+                  function manualwork() {
+                    $.ajax({
+                      url: '/work/',
+                      type: 'POST',
+                      data: {
+                        'work': 'manual',
+                      },
+                      success: function (data) {
+                        location.reload();
+                      }
+                    });
+                  }
+                </script>
                 {% else %}
-                关
+                <b onclick="autowork()">关</b>
+                <script type="text/javascript">
+                  function autowork() {
+                    $.ajax({
+                      url: '/work/',
+                      type: 'POST',
+                      data: {
+                        'work': 'auto',
+                      },
+                      success: function (data) {
+                        location.reload();
+                      }
+                    });
+                  }
+                </script>
                 {% endif %}
               </a></li>
-              <li role="separator" class="divider"></li>
-              <li class="dropdown-header" style="color: blue;">操作</li>
-              <li><a href="/home/my/">个人</a></li>
+
               <li><a href="/user/logout/">退出登录</a></li>
             </ul>
           </li>

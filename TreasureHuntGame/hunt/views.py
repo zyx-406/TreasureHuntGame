@@ -1,9 +1,9 @@
 from bson.objectid import ObjectId
 import math
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from user.views import get_user, check_login, check_gold_backpack, server_error
 
+from TreasureHuntGame.function import SERVER_ERROR, get_user, check_login, check_db, check_gold_backpack, obj2str
 from TreasureHuntGame.settings import db
 
 # Create your views here.
@@ -49,59 +49,55 @@ def get_items(times, lucky_value):
     return items
 
 @check_login
+@check_db
 def hunt_view(request):
-
-    # 判断数据库是否连接
-    if db is None:
-        return server_error(request, '数据库连接错误')
 
     # 获取username, uid, 和user文档
     username, uid, user = get_user(request)
 
     if request.method == 'GET':
 
-        # 如果请求中包含times
-        if 'times' in request.GET:
-            times = request.GET['times']
-
-            # 获取times并判断能否购买
-            if times == '1':
-
-                # 判断是否能购买
-                flag, warning = check_gold_backpack(user, 10, 1)
-                if flag is False:
-                    return render(request, 'home/home.html', dict({'warning':warning}, **user))
-
-                times = 1
-                user['gold_num'] -= 10
-            else:
-                ####### 此处可加入十连抽等 #######
-                return HttpResponseRedirect('操作错误')
-
-            # 根据次数和幸运值获取宝物
-            items = get_items(times, int(user['lucky_value']))
-
-            # 向数据库插入新的item数据
-            for item in items:
-                item['buid'] = user['_id']  # 更改属于的用户id
-                db.item.insert_one(item)
-                item['iid'] = item['_id']   # 增加此字段仅方便前端访问(受django模板层限制变量不能以下划线开头)
-
-                # 更改user的背包中宝物个数
-                user['backpack'] += 1
-
-            # 更新user数据库
-            try:
-                db.user.update({'_id':ObjectId(uid)}, user)
-            except Exception as e:
-                server_error(request)
-
-            return render(request, 'home/item.html', {'item':items[0], 'again':True})
-
-        else:
-            ####### 如果hunt使用单独页面可以在此修改 ########
-            return HttpResponseRedirect('/home')
-        
+        ####### 如果hunt使用单独页面可以在此修改 ########
+        return HttpResponseRedirect('/home')
 
     elif request.method == 'POST':
-        return HttpResponseRedirect('/home')
+
+        try:
+            times = int(request.POST['times'])
+            if times > 10:
+                return JsonResponse({'error':'连抽次数过多！'})
+        except Exception as e:
+            print('请使用规定json格式')
+            return JsonResponse({'error':'请使用规定json格式'})
+
+        flag, warning = check_gold_backpack(user, 10*times, times)
+        if flag is False:
+            return JsonResponse({'error':warning})
+
+        # 根据次数和幸运值获取宝物
+        items = get_items(times, int(user['lucky_value']))
+
+        # 向数据库插入新的item数据
+        for item in items:
+            item['buid'] = user['_id']  # 更改属于的用户id
+            try:
+                db.item.insert_one(item)
+            except Exception as e:
+                print('--- concurrent write error! ---')
+                return JsonResponse(SERVER_ERROR)
+
+        # 更新user数据库
+        try:
+            db.user.update_one({'_id':ObjectId(uid)}, 
+            {'$inc':{
+                'gold_num':-10*times,
+                'backpack':1,
+            }})
+        except Exception as e:
+            print('--- concurrent write error! ---')
+            return JsonResponse(SERVER_ERROR)
+
+        return JsonResponse({
+            'success':'成功获得宝物！以下是您获得的宝物：',
+            'items':obj2str(items),
+        })
