@@ -136,7 +136,7 @@
 
                           {% if uid == item.buid %}
                           <div class="col-md-6">
-                            <form class="signin-form" id="form{{item.iid}}">
+                            <form action="#" class="signin-form" id="form{{item.iid}}" onsubmit="return false">
                               <div class="form-group">
                                 <input type="hidden" name="f" value="sell">
                                 <input type="hidden" name="iid" value="{{item.iid}}">
@@ -187,7 +187,7 @@
             if (data.error != undefined) {
               alert(data.error)
             } else {
-              // location.reload();// 默认刷新
+              location.reload();
             }
           }
         });
@@ -223,7 +223,7 @@
             if (data.error != undefined) {
               alert(data.error)
             } else {
-              // location.reload();// 默认刷新
+              location.reload();
             }
           }
         });
