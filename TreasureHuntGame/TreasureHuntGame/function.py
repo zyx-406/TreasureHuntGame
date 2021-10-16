@@ -4,40 +4,41 @@ from django.http.response import JsonResponse
 
 
 SERVER_ERROR = {
-    'error':'服务器有误，请重试',
+    'error': '服务器有误，请重试',
 }
 
 
 # user文档格式
 def create_user(username, password):
     return {
-        'username':username,
-        'password':password,
-        'gold_num':100,
-        'work_efficiency':1,
-        'lucky_value':1,
-        'wear':{
-            'tool_num':0,
-            'ornament_num':0,
-            'totipotent_num':0,
+        'username': username,
+        'password': password,
+        'gold_num': 100,
+        'work_efficiency': 1,
+        'lucky_value': 1,
+        'wear': {
+            'tool_num': 0,
+            'ornament_num': 0,
+            'totipotent_num': 0,
         },
-        'backpack':0,
-        'auto_clean':0,
-        'auto_work':0,
+        'backpack': 0,
+        'auto_clean': 0,
+        'auto_work': 0,
+        'finish': 0,
     }
 
 # item文档格式
 def create_item(item_type):
     return {
-        'buid':'',
-        'name':item_type['name'],
-        'grade':item_type['grade'],
-        'info':item_type['info'],
-        'type':item_type['type'],
-        'work_efficiency':item_type['work_efficiency'],
-        'lucky_value':item_type['lucky_value'],
-        'state':'backpack',
-        'price':0,
+        'buid': '',
+        'name': item_type['name'],
+        'grade': item_type['grade'],
+        'info': item_type['info'],
+        'type': item_type['type'],
+        'work_efficiency': item_type['work_efficiency'],
+        'lucky_value': item_type['lucky_value'],
+        'state': 'backpack',
+        'price': 0,
     }
 
 # 获得items
@@ -53,9 +54,10 @@ def get_items(times, lucky_value):
     for item_type in item_list:
         if item_type['myid'] != 0:
             prob = float(item_type['prob'])
-            num = int(prob * (1+lucky_value*math.exp(item_type['grade'])*0.0005) * items_all_num) # 可能性算法
+            num = int(
+                prob * (1+lucky_value*math.exp(item_type['grade'])*0.0005) * items_all_num)  # 可能性算法
             items_poor.extend(list(np.full(num, item_type['myid'])))
-    
+
     # 用0补充
     if (items_all_num-len(items_poor)) > 0:
         items_poor.extend(list(np.zeros(items_all_num-len(items_poor))))
@@ -63,29 +65,33 @@ def get_items(times, lucky_value):
     # 从item资源池中获取一个item，并封装成item文档
     items = []
     for i in range(times):
-        items.append(create_item(db.item_type.find_one({'myid':int(random.choice(items_poor))})))
+        items.append(create_item(db.item_type.find_one(
+            {'myid': int(random.choice(items_poor))})))
     return items
 
 # 删除背包中最差的num个宝物
 def discard_worst(user, num):
     # 查找最差的num个宝物
     items = list(db.item.aggregate([
-        {'$match':{'buid':user['_id'], 'state':'backpack'}},
-        {'$project':{'sum':{"$add": ["$work_efficiency", "$lucky_value"] }}},
-        {'$sort':{'sum':1}},
-        {'$limit':num},
+        {'$match': {'buid': user['_id'], 'state':'backpack'}},
+        {'$project': {'sum': {"$add": ["$work_efficiency", "$lucky_value"]}}},
+        {'$sort': {'sum': 1}},
+        {'$limit': num},
     ]))
 
     # 更新数据库
     try:
         # 将items删除
         for item in items:
-            db.item.delete_one({'_id':item['_id']})
+            db.item.delete_one({'_id': item['_id']})
         # 更新user
-        db.user.update_one({'_id':user['_id']}, {'$inc':{'backpack':-1}})
+        db.user.update_one({'_id': user['_id']}, {'$inc': {'backpack': -1}})
     except:
         print('--- concurrent write error! ---')
-        return JsonResponse({'error':'服务器有误，请重试'})
+        return False, '服务器错误，请重试'
+
+    return True, ''
+
 
 max_num = 60
 # 检查用户金币是否不足或背包是否有空
@@ -94,13 +100,13 @@ def check_gold_backpack(user, gold, num):
     if user['gold_num'] < gold:
         return False, '金币不足'
     if (user['backpack'] + num) > max_num:
-        if 'auto_clean' in user:
-            if user['auto_clean'] == 1:
-                discard_worst(user, num)
+        if user['auto_clean'] == 1:
+            return discard_worst(user, num)
         else:
             return False, '背包空间不足'
 
     return True, ''
+
 
 max_tool, max_ornament, max_totipotent = 2, 2, 1
 # 检查用户是否能佩戴宝物
@@ -130,28 +136,28 @@ def get_user(request):
     username = request.session['username']
     uid = request.session['uid']
     # 从数据库中获取玩家文档
-    user = db.user.find_one({'_id':ObjectId(uid)})
+    user = db.user.find_one({'_id': ObjectId(uid)})
     return username, uid, user
 
 # 检查(用户是否已登录/用户是否存在)的装饰器
 def check_login(fn):
     def wrap(request, *args, **kwargs):
         if 'username' not in request.session or 'uid' not in request.session:
-            return JsonResponse({'global_error':'请先登录'})
+            return JsonResponse({'global_error': '请先登录'})
 
         try:
             # 获取session中的username，uid
             username = request.session['username']
             uid = request.session['uid']
             # 从数据库中获取玩家文档
-            user = db.user.find_one({'_id':ObjectId(uid)})
+            user = db.user.find_one({'_id': ObjectId(uid)})
             if user is None:
                 print('--- No this user!!! ---')
-                return JsonResponse({'global_error':'用户不存在'})
+                return JsonResponse({'global_error': '用户不存在'})
 
         except Exception as e:
             print('--- No this user!!! ---')
-            return JsonResponse({'global_error':'用户不存在'})
+            return JsonResponse({'global_error': '用户不存在'})
 
         return fn(request, *args, **kwargs)
     return wrap
@@ -161,7 +167,7 @@ def check_db(fn):
     def wrap(request, *args, **kwargs):
         if db is None:
             print('--- database connect error! ---')
-            return JsonResponse({'global_error':'服务器有误，数据库未连接，请重试'})
+            return JsonResponse({'global_error': '服务器有误，数据库未连接，请重试'})
         return fn(request, *args, **kwargs)
     return wrap
 
@@ -176,7 +182,7 @@ def obj2str(dic):
             for i in dic_i:
                 if isinstance(dic_i[i], ObjectId):
                     dic_i[i] = str(dic_i[i])
-        
+
     return dic
 
 # 自动工作job
@@ -184,7 +190,7 @@ def auto_work(uid):
     max_gold = 99999
 
     # 获取user文档
-    user = db.user.find_one({'_id':ObjectId(uid)})
+    user = db.user.find_one({'_id': ObjectId(uid)})
 
     # 更改user数据
     user['gold_num'] += 10 * user['work_efficiency']
@@ -195,7 +201,7 @@ def auto_work(uid):
 
     # 更新user数据库
     try:
-        db.user.update({'_id':ObjectId(uid)}, user)
+        db.user.update({'_id': ObjectId(uid)}, user)
         # db.user.update_one({'_id':ObjectId(uid)}, {'$inc':{'gold_num':(10*user['work_efficiency'])}})
         print(uid, ' 自动工作一次')
     except Exception as e:
@@ -232,4 +238,3 @@ def auto_work(uid):
 #     except:
 #         print('--- concurrent write error! ---')
 #         return JsonResponse({'global_error':'服务器有误，请重试'})
-

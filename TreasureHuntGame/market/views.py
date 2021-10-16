@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from django.http.response import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http.response import JsonResponse
 from django.shortcuts import render
 
 from TreasureHuntGame.function import SERVER_ERROR, check_db, obj2str, check_login, check_gold_backpack, get_user
@@ -92,7 +92,7 @@ def market_view(request):
         if f == 'buy':
             # 判断是否为当前用户操作，防止自己购买自己的宝物
             if str(item['buid']) == str(uid):
-                return JsonResponse({'error':'这是您自己的宝物！'})
+                return JsonResponse({'error': '这是您自己的宝物！'})
 
             # 判断是否onsale
             if item['state'] == 'onsale':
@@ -106,23 +106,23 @@ def market_view(request):
                 try:
                     # 更新卖家
                     db.user.update_one({'_id': ObjectId(item['buid'])},
-                                    {'$inc': {
+                                       {'$inc': {
                                         'gold_num': item['price'],
                                         'backpack': -1,
-                                    }})
+                                        }})
                     # 更新买家
                     db.user.update({'_id': ObjectId(uid)},
-                                {'$inc': {
+                                   {'$inc': {
                                     'gold_num': -item['price'],
                                     'backpack': 1,
-                                }})
+                                    }})
                     # 更新item信息
                     db.item.update({'_id': ObjectId(iid)},
-                                {'$set': {
+                                   {'$set': {
                                     'buid': ObjectId(uid),
                                     'state': 'backpack',
                                     'price': 0,
-                                }})
+                                    }})
                 except Exception as e:
                     print('--- concurrent write error! ---')
                     return JsonResponse(SERVER_ERROR)
@@ -155,10 +155,10 @@ def market_view(request):
                 # 更新数据库
                 try:
                     db.item.update({'_id': ObjectId(iid)},
-                                {'$set': {
+                                   {'$set': {
                                     'state': 'onsale',
                                     'price': price,
-                                }})
+                                    }})
                 except Exception as e:
                     print('--- concurrent write error! ---')
                     return JsonResponse(SERVER_ERROR)
@@ -181,10 +181,10 @@ def market_view(request):
                 # 更新数据库
                 try:
                     db.item.update({'_id': ObjectId(iid)},
-                                {'$set': {
+                                   {'$set': {
                                     'state': 'backpack',
                                     'price': 0,
-                                }})
+                                    }})
                 except Exception as e:
                     print('--- concurrent write error! ---')
                     return JsonResponse(SERVER_ERROR)
@@ -198,4 +198,3 @@ def market_view(request):
         else:
             print('请使用规定json格式')
             return JsonResponse({'error': '请使用规定json格式'})
-

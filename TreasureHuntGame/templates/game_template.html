@@ -82,64 +82,58 @@
               <li><a href="/home/my/">个人</a></li>
 
               <li><a href="#">
-                自动清理：
-                {% if auto_clean == 1 %}
-                开
-                <!-- <a href="#" onclick="autoclean()">开</a> -->
-                <!-- <script type="text/javascript">
-                  function work() {
-                    $.ajax({
-                      url: '/settings/',
-                      type: 'POST',
-                      data: {
-                        'work': 'once',
-                      },
-                      success: function (data) {
-                        location.reload();
-                      }
-                    });
-                  }
-                </script> -->
-                {% else %}
-                <a>关</a>
-                {% endif %}
-              </a></li>
-            <li><a href="">
-                自动工作：
-                {% if auto_work == 1 %}
-                <b onclick="manualwork()">开</b>
-                <script type="text/javascript">
-                  function manualwork() {
-                    $.ajax({
-                      url: '/work/',
-                      type: 'POST',
-                      data: {
-                        'work': 'manual',
-                      },
-                      success: function (data) {
-                        location.reload();
-                      }
-                    });
-                  }
-                </script>
-                {% else %}
-                <b onclick="autowork()">关</b>
-                <script type="text/javascript">
-                  function autowork() {
-                    $.ajax({
-                      url: '/work/',
-                      type: 'POST',
-                      data: {
-                        'work': 'auto',
-                      },
-                      success: function (data) {
-                        location.reload();
-                      }
-                    });
-                  }
-                </script>
-                {% endif %}
-              </a></li>
+                  自动清理：
+                  {% if auto_clean == 1 %}
+                  <b onclick="autoclean('manual')">开</b>
+                  {% else %}
+                  <b onclick="autoclean('auto')">关</b>
+                  {% endif %}
+                  <script type="text/javascript">
+                    function autoclean(method) {
+                      $.ajax({
+                        url: '/test/settings/',
+                        type: 'GET',
+                        data: {
+                          'setting':'auto_clean',
+                          'operate': method,
+                        },
+                        success: function (data) {
+                          if (data.error != undefined) {
+                            alert(data.error)
+                          } else {
+                            location.reload();
+                          }
+                        }
+                      });
+                    }
+                  </script>
+                </a></li>
+              <li><a href="">
+                  自动工作：
+                  {% if auto_work == 1 %}
+                  <b onclick="autowork('manual')">开</b>
+                  {% else %}
+                  <b onclick="autowork('auto')">关</b>
+                  {% endif %}
+                  <script type="text/javascript">
+                    function autowork(method) {
+                      $.ajax({
+                        url: '/work/',
+                        type: 'POST',
+                        data: {
+                          'work': method,
+                        },
+                        success: function (data) {
+                          if (data.error != undefined) {
+                            alert(data.error)
+                          } else {
+                            location.reload();
+                          }
+                        }
+                      });
+                    }
+                  </script>
+                </a></li>
 
               <li><a href="/user/logout/">退出登录</a></li>
             </ul>
