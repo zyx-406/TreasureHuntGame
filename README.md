@@ -58,7 +58,8 @@ url(GET)|操作|参数(json)|返回值(json)
         'totipotent_num':x,
     },
     'backpack':xx,
-    'auto_clean':xx,
+    'auto_clean':0/1,
+    'auto_work':0/1,
     'finish':0/1,
 }
 ```

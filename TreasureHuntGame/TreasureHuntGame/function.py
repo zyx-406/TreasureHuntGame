@@ -85,7 +85,7 @@ def discard_worst(user, num):
         for item in items:
             db.item.delete_one({'_id': item['_id']})
         # 更新user
-        db.user.update_one({'_id': user['_id']}, {'$inc': {'backpack': -1}})
+        db.user.update_one({'_id': user['_id']}, {'$inc': {'backpack': -num}})
     except:
         print('--- concurrent write error! ---')
         return False, '服务器错误，请重试'
